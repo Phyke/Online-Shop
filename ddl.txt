@@ -1,0 +1,138 @@
+/*SET sql_mode = '';*/
+CREATE TABLE `Users`( 
+    `User.ID` INT(11) NOT NULL AUTO_INCREMENT, 
+    `User.First.Name` VARCHAR(30) NOT NULL, 
+    `User.Last.Name` VARCHAR(30) NOT NULL, 
+    `User.Phone` VARCHAR(30) NOT NULL, 
+    `User.Email` VARCHAR(50) NOT NULL UNIQUE, 
+    `User.Password` VARCHAR(30) NOT NULL, 
+    `Registration.Date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, 
+    `Reward.Point.Own` INT(11), 
+    PRIMARY KEY(`User.ID`) 
+); 
+ 
+CREATE TABLE `Address`( 
+    `Address.ID` INT(11) NOT NULL AUTO_INCREMENT, 
+    `User.ID` INT(11), 
+    `Address` VARCHAR(100) NOT NULL, 
+    `Address.Type` VARCHAR(30) NOT NULL, 
+    `Postal.Code` VARCHAR(5) NOT NULL, 
+    PRIMARY KEY(`Address.ID`), 
+    FOREIGN KEY(`User.ID`) REFERENCES Users(`User.ID`) ON DELETE CASCADE 
+); 
+
+CREATE TABLE `Payment`( 
+    `Payment.ID` INT(11) NOT NULL AUTO_INCREMENT, 
+    `User.ID` INT(11), 
+    `Payment.Method` VARCHAR(30) NOT NULL, 
+    `Payment.Partner` VARCHAR(30) NOT NULL, 
+    `Reference.No` VARCHAR(20), 
+    PRIMARY KEY(`Payment.ID`), 
+    FOREIGN KEY(`User.ID`) REFERENCES Users(`User.ID`) ON DELETE CASCADE 
+); 
+
+CREATE TABLE `Shop`( 
+    `User.ID` INT(11), 
+    `Shop.Name` VARCHAR(30) NOT NULL, 
+    `Shop.Address` VARCHAR(100) NOT NULL, 
+    `Shop.Rating` VARCHAR(30), 
+    `Shop.Type` VARCHAR(30) NOT NULL, 
+    `Bank.Code` VARCHAR(30) NOT NULL, 
+    `Bank.Account.Number` VARCHAR(30) NOT NULL, 
+    PRIMARY KEY(`Shop.Name`), 
+    FOREIGN KEY(`User.ID`) REFERENCES Users(`User.ID`) ON DELETE RESTRICT 
+); 
+
+CREATE TABLE `Promotion`( 
+    `Promotion.ID` INT(11) NOT NULL AUTO_INCREMENT, 
+    `Shop.Name` VARCHAR(30) NOT NULL, 
+    `Promotion.Expire` TIMESTAMP NOT NULL, 
+    `Promotion.Type` VARCHAR(30) NOT NULL, 
+    `Promotion.Value` INT(11) NOT NULL, 
+    PRIMARY KEY(`Promotion.ID`), 
+    FOREIGN KEY(`Shop.Name`) REFERENCES Shop(`Shop.Name`) ON DELETE RESTRICT ON UPDATE CASCADE 
+); 
+
+CREATE TABLE `Product`( 
+    `Product.ID` INT(11) NOT NULL AUTO_INCREMENT, 
+    `Shop.Name` VARCHAR(30) NOT NULL, 
+    `Product.Name` VARCHAR(100) NOT NULL, 
+    `Product.Description` VARCHAR(300), 
+    `Product.Price` INT(11) NOT NULL, 
+    `Product.Stock` INT(11) NOT NULL, 
+    `Product.Rating` VARCHAR(30), 
+    `Promotion.ID` INT(11), 
+    PRIMARY KEY(`Product.ID`), 
+    FOREIGN KEY(`Shop.Name`) REFERENCES Shop(`Shop.Name`) ON DELETE RESTRICT ON UPDATE CASCADE, 
+    FOREIGN KEY(`Promotion.ID`) REFERENCES Promotion(`Promotion.ID`) ON DELETE SET NULL 
+); 
+
+CREATE TABLE `Searching`( 
+    `User.ID` INT(11), 
+    `Searching.Word` VARCHAR(30) NOT NULL, 
+    `Searching.Date.Time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, 
+    `Searching.Destination.Product` INT(11), 
+    PRIMARY KEY(`User.ID`,`Searching.Date.Time`), 
+    FOREIGN KEY(`User.ID`) REFERENCES Users(`User.ID`) ON DELETE CASCADE, 
+    FOREIGN KEY(`Searching.Destination.Product`) REFERENCES Product(`Product.ID`) ON DELETE SET NULL 
+); 
+
+CREATE TABLE `Delivery`( 
+    `Delivery.Method.ID` INT(11) NOT NULL AUTO_INCREMENT, 
+    `Delivery.Detail` VARCHAR(100) NOT NULL, 
+    `Delivery.Fee` INT(11) NOT NULL, 
+    PRIMARY KEY(`Delivery.Method.ID`) 
+); 
+ 
+CREATE TABLE `Reward`( 
+    `Reward.ID` INT(11) NOT NULL AUTO_INCREMENT, 
+    `Reward.Description` VARCHAR(100) NOT NULL, 
+    `Reward.Price` INT(11) NOT NULL, 
+    `Reward.Start.Time` TIMESTAMP NOT NULL, 
+    `Reward.End.Time` TIMESTAMP, 
+    `Reward.Stock` INT(11), 
+    `Reward.Type` VARCHAR(30) NOT NULL, 
+    `Reward.Value` INT(11) NOT NULL, 
+    PRIMARY KEY(`Reward.ID`) 
+); 
+ 
+CREATE TABLE `Coupon`( 
+    `User.ID` INT(11), 
+    `Reward.ID` INT(11), 
+    `Coupon.Code` VARCHAR(30) NOT NULL, 
+    `Coupon.Description` VARCHAR(100), 
+    `Coupon.Usage` INT(11) NOT NULL, 
+    `Coupon.Type` VARCHAR(30) NOT NULL, 
+    `Coupon.Value` INT(11) NOT NULL, 
+    PRIMARY KEY(`Coupon.Code`), 
+    FOREIGN KEY(`User.ID`) REFERENCES Users(`User.ID`) ON DELETE CASCADE, 
+    FOREIGN KEY(`Reward.ID`) REFERENCES Reward(`Reward.ID`) ON DELETE SET NULL 
+); 
+
+ 
+CREATE TABLE `OrderDetail`( 
+    `Order.No` INT(11) NOT NULL AUTO_INCREMENT, 
+    `Order.Date.Time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, 
+    `User.ID` INT(11), 
+    `Address.ID` INT(11), 
+    `Shop.Name` VARCHAR(30), 
+    `Payment.ID` INT(30), 
+    `Delivery.Method.ID` INT(11), 
+    `Coupon.Code` VARCHAR(30),
+    PRIMARY KEY(`Order.No`), 
+    FOREIGN KEY(`User.ID`) REFERENCES Users(`User.ID`) ON DELETE CASCADE, 
+    FOREIGN KEY(`Address.ID`) REFERENCES Address(`Address.ID`) ON DELETE SET NULL, 
+    FOREIGN KEY(`Shop.Name`) REFERENCES Shop(`Shop.Name`) ON DELETE SET NULL ON UPDATE CASCADE, 
+    FOREIGN KEY(`Payment.ID`) REFERENCES Payment(`Payment.ID`) ON DELETE SET NULL, 
+    FOREIGN KEY(`Delivery.Method.ID`) REFERENCES Delivery(`Delivery.Method.ID`) ON DELETE SET NULL,
+    FOREIGN KEY(`Coupon.Code`) REFERENCES Coupon(`Coupon.Code`) ON DELETE SET NULL
+); 
+
+CREATE TABLE `OrderProduct`( 
+    `Order.No` INT(11) NOT NULL, 
+    `Product.ID` INT(11) NOT NULL, 
+    `Product.Amount` INT(11) NOT NULL, 
+    PRIMARY KEY(`Order.No`,`Product.ID`), 
+    FOREIGN KEY(`Order.No`) REFERENCES OrderDetail(`Order.No`) ON DELETE CASCADE, 
+    FOREIGN KEY(`Product.ID`) REFERENCES Product(`Product.ID`) ON DELETE CASCADE
+); 
